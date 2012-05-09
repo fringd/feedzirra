@@ -46,7 +46,7 @@ module Feedzirra
     # === Returns
     # A array of class names.
     def self.feed_classes
-      @feed_classes ||= [Feedzirra::Parser::RSSFeedBurner, Feedzirra::Parser::RSS, Feedzirra::Parser::AtomFeedBurner, Feedzirra::Parser::Atom]
+      @feed_classes ||= [Feedzirra::Parser::RSSFeedBurner, Feedzirra::Parser::RSS, Feedzirra::Parser::GoogleDocsAtom, Feedzirra::Parser::AtomFeedBurner, Feedzirra::Parser::Atom, Feedzirra::Parser::ITunesRSS]
     end
     
     # Makes all registered feeds types look for the passed in element to parse.
@@ -129,6 +129,7 @@ module Feedzirra
       curl.proxy_port = options[:proxy_port] if options.has_key?(:proxy_port)
       curl.max_redirects = options[:max_redirects] if options[:max_redirects]
       curl.timeout = options[:timeout] if options[:timeout]
+      curl.ssl_verify_host = options[:ssl_verify_host] if options.has_key?(:ssl_verify_host)
 
       curl.follow_location = true
     end
@@ -278,7 +279,7 @@ module Feedzirra
           
           if klass
             begin
-              feed = klass.parse(xml, Proc.new{|message| puts "Error while parsing [#{url}] #{message}" })
+              feed = klass.parse(xml, Proc.new{|message| warn "Error while parsing [#{url}] #{message}" })
               feed.feed_url = c.last_effective_url
               feed.etag = etag_from_header(c.header_str)
               feed.last_modified = last_modified_from_header(c.header_str)
@@ -331,7 +332,7 @@ module Feedzirra
         curl.on_success do |c|
           begin
             add_feed_to_multi(multi, feed_queue.shift, feed_queue, responses, options) unless feed_queue.empty?
-            updated_feed = Feed.parse(c.body_str){ |message| puts "Error while parsing [#{feed.feed_url}] #{message}" }
+            updated_feed = Feed.parse(c.body_str){ |message| warn "Error while parsing [#{feed.feed_url}] #{message}" }
             updated_feed.feed_url = c.last_effective_url
             updated_feed.etag = etag_from_header(c.header_str)
             updated_feed.last_modified = last_modified_from_header(c.header_str)

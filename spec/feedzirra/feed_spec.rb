@@ -97,6 +97,10 @@ describe Feedzirra::Feed do
   end
 
   describe "#determine_feed_parser_for_xml" do
+    it 'should return the Feedzirra::Parser::GoogleDocsAtom calss for a Google Docs atom feed' do
+      Feedzirra::Feed.determine_feed_parser_for_xml(sample_google_docs_list_feed).should == Feedzirra::Parser::GoogleDocsAtom
+    end
+
     it "should return the Feedzirra::Parser::Atom class for an atom feed" do
       Feedzirra::Feed.determine_feed_parser_for_xml(sample_atom_feed).should == Feedzirra::Parser::Atom
     end
@@ -254,7 +258,7 @@ describe Feedzirra::Feed do
 
     describe "#add_url_to_multi" do
       before(:each) do
-        @multi = Curl::Multi.get(@paul_feed[:url])
+        @multi = Curl::Multi.get([@paul_feed[:url]], {:follow_location => true}, {:pipeline => true})
         @multi.stub!(:add)
         @easy_curl = Curl::Easy.new(@paul_feed[:url])
         
@@ -396,7 +400,7 @@ describe Feedzirra::Feed do
 
     describe "#add_feed_to_multi" do
       before(:each) do
-        @multi = Curl::Multi.get(@paul_feed[:url])
+        @multi = Curl::Multi.get([@paul_feed[:url]], {:follow_location => true}, {:pipeline => true})
         @multi.stub!(:add)
         @easy_curl = Curl::Easy.new(@paul_feed[:url])
         @feed = Feedzirra::Feed.parse(sample_feedburner_atom_feed)
